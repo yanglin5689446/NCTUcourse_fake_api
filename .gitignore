@@ -1,0 +1,6 @@
+safecode_cracker/train_data
+safecode_cracker/test_data
+safecode_cracker/output_dir
+config.pyc
+config.py
+__pycache__/
