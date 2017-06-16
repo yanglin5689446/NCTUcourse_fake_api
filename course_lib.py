@@ -10,7 +10,7 @@ import json
 import subprocess
 
 
-def get_pre_cookie(ID):
+def refresh_cookie(ID):
     cookie = ""
     headers = ur.urlopen(constant.HOST).headers.get_all('Set-Cookie')
     for header in headers:
@@ -27,6 +27,7 @@ def crack_captcha(cookie):
     with open('captcha.bmp', 'w+b') as f:
         f.write(captcha_img)
     result = subprocess.run(['./cracker', 'captcha.bmp'], stdout=subprocess.PIPE)
+    os.system("rm captcha.bmp")
     safecode = result.stdout
     return safecode 
     
@@ -46,7 +47,7 @@ def login(cookie, ID, passwd, qCode):
     for header in login_headers:
         login_request.add_header(header[0], header[1])
     login_response = ur.urlopen(login_request)
-    return login_response.read()
+    return check_login_success(login_response.read())
 
 
 def course_operation(cookie, magic_number):
@@ -65,51 +66,27 @@ def course_select(cookie, number, _type, order=1):
     course_operation(cookie, str(_type) + str(order) + "0" + str(number))
 def course_unselect(cookie, number, _type):
     course_operation(cookie, str(_type) + "01" + str(number))
-def get_selected_courses(cookie):
+def get_selected_courses(cookie, ID):
     course_headers = [
         ('Cookie', cookie), 
         ('Content-Type', 'application/x-www-form-urlencoded'),
         ('User-Agent', ' '),
         ('Referer', 'https://course.nctu.edu.tw/inMenu.asp')
     ]
-    course_data = up.urlencode([('qKey', config.student_ID)]).encode('utf-8')
+    course_data = up.urlencode([('qKey', ID)]).encode('utf-8')
     course_request = ur.Request(constant.HOST + constant.COURSE_LIST_PAGE, data=course_data, method='POST')
     for header in course_headers:
         course_request.add_header(header[0], header[1])
     course_response = ur.urlopen(course_request)
-    #with open('tmp.html', 'w') as f:
-    #    f.write(str(course_response.read()))
     course_page = BS(course_response.read().decode('big5'), 'html5lib')
     main_table = course_page.center.find_all('table')[1].find_all('tr')[2:]
-    _json = []
+    data = []
+    j = []
     for tr in main_table:
-        j = []
         for td in tr.find_all('td'):
             j.append(td.font.text.strip())
-        _json.append(j)
-    print(json.dumps(_json, ensure_ascii=False, sort_keys=True, indent=4, separators=(',', ': ')))
-
-
-
-if __name__ == '__main__':
-    cookie = get_pre_cookie(config.student_ID)
-    qCode = crack_captcha(cookie)
-    response_page = login(cookie, config.student_ID, config.password, qCode)
-    if not check_login_success(response_page):
-        os._exit(1)
-    while True:
-        option = input("[0]所有已選課程 [1]選課 [2] 退選 [3] quit: ")
-        if option == '0':
-            get_selected_courses(cookie)
-        elif option == '1':
-            course_number = input("課號: ")
-            course_type = input("類型: ")
-            course_order = input ("志願序(無志願序填1): ")
-            course_select(cookie, course_number, course_type, course_order)
-        elif option == '2':
-            course_number = input("課號: ")
-            course_type = input("類型: ")
-            course_unselect(cookie, course_number, course_type)
-        elif option == '3':
-            break
-        print("")
+        if len(j) > 1:
+            data.append(j)
+        j = []
+    response_json = { "length": len(data),  "data": data}
+    return response_json
