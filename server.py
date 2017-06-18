@@ -20,8 +20,8 @@ class CourseAPI(Resource):
     def post(self):
         _id = request.form.get('CrsId')
         _type = request.form.get('CrsType')
-        _order = request.form.get('order')
-        course_lib.course_select(session['cookie_value'], _id, _type, _order)
+        _pri = request.form.get('priority')
+        course_lib.course_select(session['cookie_value'], _id, _type, _pri)
         all_courses = course_lib.get_selected_courses(session['cookie_value'], session['student_id'])
         for course in all_courses["data"]:
             if course[0] == _id: 
