@@ -62,8 +62,8 @@ def course_operation(cookie, magic_number):
         course_request.add_header(header[0], header[1])
     course_response = ur.urlopen(course_request)
 
-def course_select(cookie, number, _type, order=1):
-    course_operation(cookie, str(_type) + str(order) + "0" + str(number))
+def course_select(cookie, number, _type, priority=1):
+    course_operation(cookie, str(_type) + str(priority) + "0" + str(number))
 def course_unselect(cookie, number, _type):
     course_operation(cookie, str(_type) + "01" + str(number))
 def get_selected_courses(cookie, ID):
